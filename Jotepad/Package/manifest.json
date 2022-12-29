@@ -1,0 +1,10 @@
+﻿{
+  "name": "Jotepad",
+  "author": "Tonedef-AKA-Spacetornado",
+  "description": "Adds Notepad-style functionality, so you can quickly jot down ideas, reminders, a To Do list, or anything your heart desires.",
+  "version_number": "0.1.0",
+  "website_url": "https://github.com/Spacetornado/Jotepad",
+  "dependencies": [
+    "ValheimModding-Jotunn-2.7.9"
+  ]
+}
