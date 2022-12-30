@@ -21,7 +21,7 @@ namespace Jotepad
     {
         public const string PluginGUID = "com.jotunn.Jotepad";
         public const string PluginName = "Jotepad";
-        public const string PluginVersion = "0.7.0";
+        public const string PluginVersion = "0.7.3";
         private GameObject JotepadPanel;
         private ButtonConfig ShowGUIButton;
         private ConfigEntry<string> JotepadStringConfig;
@@ -209,7 +209,7 @@ namespace Jotepad
                     parent: JotepadPanel.transform,
                     anchorMin: new Vector2(0.5f, 0.5f),
                     anchorMax: new Vector2(0.5f, 0.5f),
-                    position: new Vector2(5f, 250f),
+                    position: new Vector2(5f, 265f),
                     font: GUIManager.Instance.AveriaSerifBold,
                     fontSize: 48,
                     color: GUIManager.Instance.ValheimOrange,
