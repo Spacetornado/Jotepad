@@ -1,11 +1,12 @@
 ﻿# Jotepad
 
-A Valheim mod that adds Notepad-style functionality, so you can quickly jot down ideas, reminders, a To Do list, or anything your heart desires.
+A Valheim mod that adds a To-Do task/checklist.
 
 
 ## Features
 
-Notepad-like GUI that you can move around and toggle on/off.
+GUI that you toggle on/off.
+Dropdown list of common tasks to quickly add to your To Do list.
 
 
 ## Changelog
