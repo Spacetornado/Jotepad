@@ -5,8 +5,10 @@ A Valheim mod that adds a To-Do task/checklist.
 
 ## Features
 
-GUI that you toggle on/off.
-Dropdown list of common tasks to quickly add to your To Do list.
+GUI checklist that opens when you press Insert (keybind not configurable yet).
+Add custom items to the list.
+Click Clear to delete the entire list (wishlist item: remove individual items, and/or strikethrough the font).
+Click Close to hide the list (or press Insert again).
 
 
 ## Changelog

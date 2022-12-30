@@ -24,10 +24,13 @@ namespace Jotepad
     {
         public const string PluginGUID = "com.jotunn.Jotepad";
         public const string PluginName = "Jotepad";
-        public const string PluginVersion = "0.1.0";
+        public const string PluginVersion = "0.6.1";
 
         private GameObject JotepadPanel;
         private ButtonConfig ShowGUIButton;
+
+        private int numItems;
+        private const int MAX_ITEMS = 20;
 
         private string JotepadString;
 
@@ -36,9 +39,16 @@ namespace Jotepad
             if (!JotepadPanel) { Jotunn.Logger.LogInfo("JotepadPanel is null."); }
             var inputField = JotepadPanel.GetComponentInChildren<InputField>();
             if (!inputField) { Jotunn.Logger.LogInfo("Could not find InputField"); }
-            Jotunn.Logger.LogInfo("Adding " + inputField.text);
+            
+            if (numItems >= MAX_ITEMS)
+            {
+                inputField.text = "MAX ITEMS. Clear list.";
+                return;
+            }
+            numItems++;
+            //Jotunn.Logger.LogInfo("Adding " + inputField.text);
             var textField = JotepadPanel.GetComponentInChildren<Text>();
-            JotepadString += "\n" + inputField.text;
+            JotepadString += "\n" + numItems.ToString() + ". " + inputField.text;
             textField.text = JotepadString;
         }
         private void AddDropdownItem()
@@ -58,6 +68,7 @@ namespace Jotepad
         private void Awake()
         {
             AddInputs();
+            numItems = 0;
         }
 
         // Called every frame
@@ -80,6 +91,8 @@ namespace Jotepad
         {
             var textField = JotepadPanel.GetComponentInChildren<Text>();
             textField.text = "";
+            JotepadString = "";
+            numItems = 0;
         }
         private void ToggleJotepad()
         {
@@ -135,14 +148,14 @@ namespace Jotepad
                     parent: JotepadPanel.transform,
                     anchorMin: new Vector2(0.5f, 1f),
                     anchorMax: new Vector2(0.5f, 1f),
-                    position: new Vector2(0f, 150f),
+                    position: new Vector2(0f, -250f),
                     font: GUIManager.Instance.AveriaSerifBold,
                     fontSize: 18,
                     color: GUIManager.Instance.ValheimOrange,
                     outline: true,
                     outlineColor: Color.black,
                     width: 750f,
-                    height: 400f,
+                    height: 550f,
                     addContentSizeFitter: false);
 
                 // Close button
@@ -151,7 +164,7 @@ namespace Jotepad
                     parent: JotepadPanel.transform,
                     anchorMin: new Vector2(0.5f, 0.5f),
                     anchorMax: new Vector2(0.5f, 0.5f),
-                    position: new Vector2(300, -250f),
+                    position: new Vector2(300, -300f),
                     width: 100f,
                     height: 60f);
                 closeButtonObject.SetActive(true);
@@ -166,7 +179,7 @@ namespace Jotepad
                     parent: JotepadPanel.transform,
                     anchorMin: new Vector2(0.5f, 0.5f),
                     anchorMax: new Vector2(0.5f, 0.5f),
-                    position: new Vector2(150, -250f),
+                    position: new Vector2(150, -300f),
                     width: 100f,
                     height: 60f);
                 clearButtonObject.SetActive(true);
@@ -175,7 +188,7 @@ namespace Jotepad
                 Button clearButton = clearButtonObject.GetComponent<Button>();
                 clearButton.onClick.AddListener(ClearJotepad);
 
-
+                /*
                 // Dropdown list
                 GameObject dropdownList = GUIManager.Instance.CreateDropDown(
                     parent: JotepadPanel.transform,
@@ -212,7 +225,7 @@ namespace Jotepad
                 Button dropdownButton = dropdownButtonObject.GetComponent<Button>();
                 dropdownButton.onClick.AddListener(AddDropdownItem);
 
-
+                */
                 // Add custom item input field
                 GameObject inputField = GUIManager.Instance.CreateInputField(
                     parent: JotepadPanel.transform,

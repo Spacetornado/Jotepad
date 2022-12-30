@@ -2,7 +2,7 @@
   "name": "Jotepad",
   "author": "Tonedef-AKA-Spacetornado",
   "description": "Adds a To-Do task/checklist.",
-  "version_number": "0.1.0",
+  "version_number": "0.6.1",
   "website_url": "https://github.com/Spacetornado/Jotepad",
   "dependencies": [
     "ValheimModding-Jotunn-2.7.9"
