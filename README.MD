@@ -13,7 +13,7 @@ Add custom items to the list. Click an "X" button to remove an item from the lis
 
 Click Clear List to delete the entire list.
 
-Click Close to hide the list (or press Insert again).
+Click Close to hide the list, or press J again.
 
 
 ## Changelog
