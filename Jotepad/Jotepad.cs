@@ -5,16 +5,13 @@
 // Project: Jotepad
 
 using BepInEx;
-using Jotunn.Entities;
 using Jotunn.GUI;
 using Jotunn.Managers;
-using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine;
 using Jotunn.Configs;
 using BepInEx.Configuration;
 using static ItemSets;
-using System.Reflection.Emit;
 
 namespace Jotepad
 {
@@ -24,54 +21,101 @@ namespace Jotepad
     {
         public const string PluginGUID = "com.jotunn.Jotepad";
         public const string PluginName = "Jotepad";
-        public const string PluginVersion = "0.6.1";
-
+        public const string PluginVersion = "0.7.0";
         private GameObject JotepadPanel;
         private ButtonConfig ShowGUIButton;
+        private ConfigEntry<string> JotepadStringConfig;
+        private ConfigEntry<KeyCode> ToggleJotepadConfig;
+        private string[] JotepadArray = new string[MAX_ITEMS];
+        private int numItems = 0;
+        private const int MAX_ITEMS = 10;
+        private const int MAX_LENGTH = 50;
+        private const float ITEM_TEXT_WIDTH = 700f;
+        private const float ITEM_TEXT_HEIGHT = 30f;
+        private const float START_TEXT_Y_POS = 200f;
+        private const float MOVE_TEXT_Y = 45f;
+        private const float TEXT_X_POS = 25f;
+        private const float DELETE_SIZE = 30f;
+        private const float DELETE_X_POS = -350f;
+        private const string SERIAL_TOKEN = "``]]JOTE[[``";
 
-        private int numItems;
-        private const int MAX_ITEMS = 20;
-
-        private string JotepadString;
-
-        private void AddTextItem()
+        private void SaveList()
         {
-            if (!JotepadPanel) { Jotunn.Logger.LogInfo("JotepadPanel is null."); }
-            var inputField = JotepadPanel.GetComponentInChildren<InputField>();
-            if (!inputField) { Jotunn.Logger.LogInfo("Could not find InputField"); }
-            
-            if (numItems >= MAX_ITEMS)
+            string serializedList = "";
+            for (int i = 0; i < numItems; i++)            
             {
-                inputField.text = "MAX ITEMS. Clear list.";
+                serializedList += JotepadArray[i];
+                if (i < numItems - 1)
+                {
+                    serializedList += SERIAL_TOKEN;
+                }
+            }
+            JotepadStringConfig.Value = serializedList;
+        }
+        private void ReadList()
+        {
+            if (JotepadStringConfig == null) { return; }
+            string serializedList = JotepadStringConfig.Value;
+            if (serializedList.IsNullOrWhiteSpace())
+            {
                 return;
             }
-            numItems++;
-            //Jotunn.Logger.LogInfo("Adding " + inputField.text);
-            var textField = JotepadPanel.GetComponentInChildren<Text>();
-            JotepadString += "\n" + numItems.ToString() + ". " + inputField.text;
-            textField.text = JotepadString;
+            string[] tempArray = serializedList.Split(new string[] { SERIAL_TOKEN }, System.StringSplitOptions.RemoveEmptyEntries);            
+            foreach (string item in tempArray)
+            {
+                JotepadArray[numItems] = item;
+                numItems++;
+            }
         }
-        private void AddDropdownItem()
+        private void AddTextItem()
         {
-            if (!JotepadPanel) { Jotunn.Logger.LogInfo("JotepadPanel is null."); }
-            var dropdown = JotepadPanel.GetComponentInChildren<Dropdown>();
-            if (!dropdown) { Jotunn.Logger.LogInfo("Could not find Dropdown"); }            
-            var textField = JotepadPanel.GetComponentInChildren<Text>();
-            JotepadString += "\n" + dropdown.GetComponentInChildren<Text>().text;
-            textField.text = JotepadString;
+            var inputField = JotepadPanel.GetComponentInChildren<InputField>();
+
+            string newItem = inputField.text.Trim();
+            // Don't add empty items or just whitespace, or if it contains the serializer token
+            if (newItem.IsNullOrWhiteSpace() || newItem.Contains(SERIAL_TOKEN))
+            {
+                return;
+            }
+            // Check if max. items reached.
+            if (numItems >= MAX_ITEMS)
+            {
+                inputField.text = "Max reached.";
+                numItems = MAX_ITEMS;
+                return;
+            }
+            // If it's longer than the max length, cut the end off.
+            if (newItem.Length > MAX_LENGTH)
+            {
+                newItem = newItem.Substring(0, MAX_LENGTH-2) + "..";
+            }
+            JotepadArray[numItems] = newItem;
+            numItems++;
+            inputField.text = "";
+            ReloadThenSaveList();
         }
-
-        // Use this class to add your own localization to the game
-        // https://valheim-modding.github.io/Jotunn/tutorials/localization.html
-        //public static CustomLocalization Localization = LocalizationManager.Instance.GetLocalization();
-
+        private void ReloadList()
+        {
+            // Loop through all Text objects
+            Text[] textFields = JotepadPanel.GetComponentsInChildren<Text>();            
+            foreach (var field in textFields)
+            {
+                // Skip any text fields with names that don't start with ItemText
+                if (field.name.StartsWith("ItemText"))
+                {
+                    // Remove "ItemText" from the name, then parse that into an integer
+                    int fieldNum = int.Parse(field.name.Replace("ItemText", ""));
+                    field.text = (fieldNum + 1).ToString() + ". " + JotepadArray[fieldNum];
+                }
+            }
+        }
         private void Awake()
         {
-            AddInputs();
             numItems = 0;
+            CreateConfigValues();
+            ReadList();
+            AddInputs();            
         }
-
-        // Called every frame
         private void Update()
         {
             // Since our Update function in our BepInEx mod class will load BEFORE Valheim loads,
@@ -89,10 +133,50 @@ namespace Jotepad
         }
         private void ClearJotepad()
         {
-            var textField = JotepadPanel.GetComponentInChildren<Text>();
-            textField.text = "";
-            JotepadString = "";
+            for (int i = 0; i < MAX_ITEMS; i++)
+            {
+                JotepadArray[i] = "";
+            }
             numItems = 0;
+            ReloadThenSaveList();
+        }
+        private GameObject NewItemText(float yPos, int num, string itemString)
+        {
+            GameObject itemText = GUIManager.Instance.CreateText(
+                    text: (num + 1).ToString() + ". " + itemString,
+                    parent: JotepadPanel.transform,
+                    anchorMin: new Vector2(0.5f, 0.5f),
+                    anchorMax: new Vector2(0.5f, 0.5f),
+                    position: new Vector2(TEXT_X_POS, yPos),
+                    font: GUIManager.Instance.AveriaSerifBold,
+                    fontSize: 24,
+                    color: GUIManager.Instance.ValheimOrange,
+                    outline: true,
+                    outlineColor: Color.black,
+                    width: ITEM_TEXT_WIDTH,
+                    height: ITEM_TEXT_HEIGHT,
+                    addContentSizeFitter: false);
+            itemText.name = "ItemText" + num.ToString();
+            return itemText;
+        }
+        private GameObject NewDeleteButton(float yPos)
+        {
+            GameObject buttonObject = GUIManager.Instance.CreateButton(
+                    text: "X",
+                    parent: JotepadPanel.transform,
+                    anchorMin: new Vector2(0.5f, 0.5f),
+                    anchorMax: new Vector2(0.5f, 0.5f),
+                    position: new Vector2(DELETE_X_POS, yPos),
+                    width: DELETE_SIZE,
+                    height: DELETE_SIZE);
+            buttonObject.SetActive(true);
+            return buttonObject;
+        }
+        private void ReloadThenSaveList()
+        {
+            ReloadList();
+            SaveList();
+            GUI.FocusControl("InputField");
         }
         private void ToggleJotepad()
         {
@@ -101,17 +185,13 @@ namespace Jotepad
             {
                 if (GUIManager.Instance == null)
                 {
-                    Logger.LogError("GUIManager instance is null");
                     return;
                 }
-
                 if (!GUIManager.CustomGUIFront)
                 {
-                    Logger.LogError("GUIManager CustomGUI is null");
                     return;
                 }
-
-                // Create the panel object
+                // Wooden Jotepad panel
                 JotepadPanel = GUIManager.Instance.CreateWoodpanel(
                     parent: GUIManager.CustomGUIFront.transform,
                     anchorMin: new Vector2(0.5f, 0.5f),
@@ -121,42 +201,69 @@ namespace Jotepad
                     height: 700,
                     draggable: false);
                 JotepadPanel.SetActive(false);
-
-                // Add the Jötunn draggable Component to the panel
-                // Note: This is normally automatically added when using CreateWoodpanel()
                 JotepadPanel.AddComponent<DragWindowCntrl>();
 
                 // Jotepad label
-                /*GameObject textObject = GUIManager.Instance.CreateText(
+                GameObject itemText = GUIManager.Instance.CreateText(
                     text: "Jotepad",
                     parent: JotepadPanel.transform,
-                    anchorMin: new Vector2(0.5f, 1f),
-                    anchorMax: new Vector2(0.5f, 1f),
-                    position: new Vector2(0f, -100f),
+                    anchorMin: new Vector2(0.5f, 0.5f),
+                    anchorMax: new Vector2(0.5f, 0.5f),
+                    position: new Vector2(5f, 250f),
                     font: GUIManager.Instance.AveriaSerifBold,
-                    fontSize: 30,
+                    fontSize: 48,
                     color: GUIManager.Instance.ValheimOrange,
                     outline: true,
                     outlineColor: Color.black,
-                    width: 350f,
-                    height: 40f,
-                    addContentSizeFitter: false);*/
-
-                // To do list
-                GameObject JotepadText = GUIManager.Instance.CreateText(
-                    text: JotepadString,
-                    parent: JotepadPanel.transform,
-                    anchorMin: new Vector2(0.5f, 1f),
-                    anchorMax: new Vector2(0.5f, 1f),
-                    position: new Vector2(0f, -250f),
-                    font: GUIManager.Instance.AveriaSerifBold,
-                    fontSize: 18,
-                    color: GUIManager.Instance.ValheimOrange,
-                    outline: true,
-                    outlineColor: Color.black,
-                    width: 750f,
-                    height: 550f,
+                    width: 200f,
+                    height: 80f,
                     addContentSizeFitter: false);
+
+                // To do list text items
+                float yPos = START_TEXT_Y_POS;
+                GameObject[] JotepadTextItems = new GameObject[MAX_ITEMS];
+                for (int i = 0; i < MAX_ITEMS; i++) {
+                    if (i < JotepadArray.Length)
+                    {
+                        string val = "";
+                        if (!JotepadArray[i].IsNullOrWhiteSpace()) { val = JotepadArray[i]; }
+                        JotepadTextItems[i] = NewItemText(yPos, i, val);
+                    }
+                    else
+                    {
+                        JotepadTextItems[i] = NewItemText(yPos, i, "");
+                    }
+                    yPos -= MOVE_TEXT_Y;
+                }
+
+                // To do list delete buttons.
+                yPos = START_TEXT_Y_POS;
+                GameObject[] DeleteButtons = new GameObject[MAX_ITEMS];
+                for (int i = 0; i < MAX_ITEMS; i++) {
+                    DeleteButtons[i] = NewDeleteButton(yPos);
+                    yPos -= MOVE_TEXT_Y;
+                }
+                // There is definitely a more elegant way to do this, but I was very lazy... and it's only 10 buttons! :)
+                UnityEngine.UI.Button delButton1 = DeleteButtons[0].GetComponent<UnityEngine.UI.Button>();
+                delButton1.onClick.AddListener(Del1);
+                UnityEngine.UI.Button delButton2 = DeleteButtons[1].GetComponent<UnityEngine.UI.Button>();
+                delButton2.onClick.AddListener(Del2);
+                UnityEngine.UI.Button delButton3 = DeleteButtons[2].GetComponent<UnityEngine.UI.Button>();
+                delButton3.onClick.AddListener(Del3);
+                UnityEngine.UI.Button delButton4 = DeleteButtons[3].GetComponent<UnityEngine.UI.Button>();
+                delButton4.onClick.AddListener(Del4);
+                UnityEngine.UI.Button delButton5 = DeleteButtons[4].GetComponent<UnityEngine.UI.Button>();
+                delButton5.onClick.AddListener(Del5);
+                UnityEngine.UI.Button delButton6 = DeleteButtons[5].GetComponent<UnityEngine.UI.Button>();
+                delButton6.onClick.AddListener(Del6);
+                UnityEngine.UI.Button delButton7 = DeleteButtons[6].GetComponent<UnityEngine.UI.Button>();
+                delButton7.onClick.AddListener(Del7);
+                UnityEngine.UI.Button delButton8 = DeleteButtons[7].GetComponent<UnityEngine.UI.Button>();
+                delButton8.onClick.AddListener(Del8);
+                UnityEngine.UI.Button delButton9 = DeleteButtons[8].GetComponent<UnityEngine.UI.Button>();
+                delButton9.onClick.AddListener(Del9);
+                UnityEngine.UI.Button delButton10 = DeleteButtons[9].GetComponent<UnityEngine.UI.Button>();
+                delButton10.onClick.AddListener(Del10);
 
                 // Close button
                 GameObject closeButtonObject = GUIManager.Instance.CreateButton(
@@ -164,79 +271,42 @@ namespace Jotepad
                     parent: JotepadPanel.transform,
                     anchorMin: new Vector2(0.5f, 0.5f),
                     anchorMax: new Vector2(0.5f, 0.5f),
-                    position: new Vector2(300, -300f),
+                    position: new Vector2(300, -275f),
                     width: 100f,
                     height: 60f);
                 closeButtonObject.SetActive(true);
 
                 // Add a listener to the button to close the panel again
-                Button closeButton = closeButtonObject.GetComponent<Button>();
+                UnityEngine.UI.Button closeButton = closeButtonObject.GetComponent<UnityEngine.UI.Button>();
                 closeButton.onClick.AddListener(ToggleJotepad);
 
                 // Clear button
                 GameObject clearButtonObject = GUIManager.Instance.CreateButton(
-                    text: "Clear",
+                    text: "Clear List",
                     parent: JotepadPanel.transform,
                     anchorMin: new Vector2(0.5f, 0.5f),
                     anchorMax: new Vector2(0.5f, 0.5f),
-                    position: new Vector2(150, -300f),
+                    position: new Vector2(125, -275f),
                     width: 100f,
                     height: 60f);
                 clearButtonObject.SetActive(true);
 
                 // Add a listener to the button to close the panel again
-                Button clearButton = clearButtonObject.GetComponent<Button>();
+                UnityEngine.UI.Button clearButton = clearButtonObject.GetComponent<UnityEngine.UI.Button>();
                 clearButton.onClick.AddListener(ClearJotepad);
 
-                /*
-                // Dropdown list
-                GameObject dropdownList = GUIManager.Instance.CreateDropDown(
-                    parent: JotepadPanel.transform,
-                    anchorMin: new Vector2(0.5f, 0.5f),
-                    anchorMax: new Vector2(0.5f, 0.5f),
-                    position: new Vector2(-250f, -250f),
-                    fontSize: 16,
-                    width: 200f,
-                    height: 60f);
-                dropdownList.GetComponent<Dropdown>().AddOptions(new List<string>
-                {
-                    "Red Mushrooms", "Yellow Mushrooms", "Raspberries", "Blueberries", "Cloudberries",
-                    "Boar Meat", "Deer meat", "Neck tails", "Go fishing", "Wolf meat", "Lox meat",
-                    "Deer hide", "Leather scraps", "Troll hides", "Wolf hides", "Lox hides",
-                    "Core wood", "Fine wood", "Yggdrasil wood",
-                    "Copper ore", "Tin ore", "Iron scraps", "Silver ore", "Blackmetal",
-                    "Find Haldor", "Find Elder", "Kill Elder", "Find Bonemass", "Kill Bonemass",
-                    "Find Moder", "Kill Moder", "Find Yagluth", "Kill Yagluth", "Find The Queen", "Kill The Queen",
-
-                });
-
-                // Add dropdown button
-                GameObject dropdownButtonObject = GUIManager.Instance.CreateButton(
-                    text: "Add",
-                    parent: JotepadPanel.transform,
-                    anchorMin: new Vector2(0.5f, 0.5f),
-                    anchorMax: new Vector2(0.5f, 0.5f),
-                    position: new Vector2(-100f, -250f),
-                    width: 80f,
-                    height: 40f);
-                dropdownButtonObject.SetActive(true);
-
-                // Add a listener to the button to close the panel again
-                Button dropdownButton = dropdownButtonObject.GetComponent<Button>();
-                dropdownButton.onClick.AddListener(AddDropdownItem);
-
-                */
                 // Add custom item input field
                 GameObject inputField = GUIManager.Instance.CreateInputField(
                     parent: JotepadPanel.transform,
                     anchorMin: new Vector2(0.5f, 0.5f),
                     anchorMax: new Vector2(0.5f, 0.5f),
-                    position: new Vector2(-250f, -300f),
+                    position: new Vector2(-265f, -275f),
                     contentType: InputField.ContentType.Standard,
-                    placeholderText: "whatevs...",
+                    placeholderText: "dream big...",
                     fontSize: 16,
                     width: 200f,
                     height: 40f);
+                inputField.name = "InputField";
 
                 // Add custom button
                 GameObject addButtonObject = GUIManager.Instance.CreateButton(
@@ -244,16 +314,15 @@ namespace Jotepad
                     parent: JotepadPanel.transform,
                     anchorMin: new Vector2(0.5f, 0.5f),
                     anchorMax: new Vector2(0.5f, 0.5f),
-                    position: new Vector2(-100f, -300f),
+                    position: new Vector2(-100f, -275f),
                     width: 80f,
                     height: 60f);
                 addButtonObject.SetActive(true);
 
                 // Add a listener to the button to close the panel again
-                Button addButton = addButtonObject.GetComponent<Button>();
+                UnityEngine.UI.Button addButton = addButtonObject.GetComponent<UnityEngine.UI.Button>();
                 addButton.onClick.AddListener(AddTextItem);
-
-
+                GUI.FocusControl("InputField");
             }
 
             // Switch the current state
@@ -265,22 +334,106 @@ namespace Jotepad
             // Toggle input for the player and camera while displaying the GUI
             GUIManager.BlockInput(state);
         }
-
-
-        // Add custom key bindings
+        private void RemoveArrayItem(int index)
+        {
+            // Don't remove the item if there is no item to remove
+            if (index > numItems - 1)
+            {
+                return;
+            }
+            JotepadArray = RemoveElementAndCopyArray(JotepadArray, index);
+            numItems--;
+            var inputField = JotepadPanel.GetComponentInChildren<InputField>();
+            if (inputField.text == "Max reached.")
+            {
+                inputField.text = "";
+            }
+            
+            ReloadThenSaveList();
+        }
+        public string[] RemoveElementAndCopyArray(string[] array, int index)
+        {
+            string[] newArray = new string[array.Length];
+            int j = 0;
+            for (int i = 0; i < array.Length; i++)
+            {
+                if (i != index)
+                {
+                    newArray[j] = array[i];
+                    j++;
+                }
+            }
+            newArray[array.Length - 1] = "";
+            return newArray;
+        }
+        private void Del1() { RemoveArrayItem(0); }
+        private void Del2() { RemoveArrayItem(1); }
+        private void Del3() { RemoveArrayItem(2); }
+        private void Del4() { RemoveArrayItem(3); }
+        private void Del5() { RemoveArrayItem(4); }
+        private void Del6() { RemoveArrayItem(5); }
+        private void Del7() { RemoveArrayItem(6); }
+        private void Del8() { RemoveArrayItem(7); }
+        private void Del9() { RemoveArrayItem(8); }
+        private void Del10() { RemoveArrayItem(9); }
         private void AddInputs()
         {
-            // Add key bindings on the fly
             ShowGUIButton = new ButtonConfig
             {
-                Name = "Jotepad_Toggle",
-                Key = KeyCode.Insert,
+                Name = "ToggleJotepadButton",
+                Config = ToggleJotepadConfig,
                 ActiveInCustomGUI = true  // Enable this button in custom GUI
             };
             InputManager.Instance.AddButton(PluginGUID, ShowGUIButton);
-
+        }
+        private void CreateConfigValues()
+        {
+            Config.SaveOnConfigSet = true;
+            JotepadStringConfig = Config.Bind("Client config", "JotepadString", "", "Jotepad list");
+            ToggleJotepadConfig = Config.Bind("Client config", "Toggle Jotepad", KeyCode.J, new ConfigDescription("Show/hide the Jotepad panel."));
         }
 
     }
 }
 
+
+
+
+/*
+// Dropdown list
+GameObject dropdownList = GUIManager.Instance.CreateDropDown(
+    parent: JotepadPanel.transform,
+    anchorMin: new Vector2(0.5f, 0.5f),
+    anchorMax: new Vector2(0.5f, 0.5f),
+    position: new Vector2(-250f, -250f),
+    fontSize: 16,
+    width: 200f,
+    height: 60f);
+dropdownList.GetComponent<Dropdown>().AddOptions(new List<string>
+{
+    "Red Mushrooms", "Yellow Mushrooms", "Raspberries", "Blueberries", "Cloudberries",
+    "Boar Meat", "Deer meat", "Neck tails", "Go fishing", "Wolf meat", "Lox meat",
+    "Deer hide", "Leather scraps", "Troll hides", "Wolf hides", "Lox hides",
+    "Core wood", "Fine wood", "Yggdrasil wood",
+    "Copper ore", "Tin ore", "Iron scraps", "Silver ore", "Blackmetal",
+    "Find Haldor", "Find Elder", "Kill Elder", "Find Bonemass", "Kill Bonemass",
+    "Find Moder", "Kill Moder", "Find Yagluth", "Kill Yagluth", "Find The Queen", "Kill The Queen",
+
+});
+
+// Add dropdown button
+GameObject dropdownButtonObject = GUIManager.Instance.CreateButton(
+    text: "Add",
+    parent: JotepadPanel.transform,
+    anchorMin: new Vector2(0.5f, 0.5f),
+    anchorMax: new Vector2(0.5f, 0.5f),
+    position: new Vector2(-100f, -250f),
+    width: 80f,
+    height: 40f);
+dropdownButtonObject.SetActive(true);
+
+// Add a listener to the button to close the panel again
+Button dropdownButton = dropdownButtonObject.GetComponent<Button>();
+dropdownButton.onClick.AddListener(AddDropdownItem);
+
+*/

@@ -1,19 +1,22 @@
-﻿# Jotepad
+# Jotepad
 
-A Valheim mod that adds a To-Do task/checklist.
+A Valheim mod that adds a To-Do task/checklist that you can add & remove custom items to/from. Press J to display it.
 
+![Screenshot](http://tonays.com/i/jotepadscreen1.png "Jotepad Screenshot")
 
 ## Features
 
-GUI checklist that opens when you press Insert (keybind not configurable yet).
-Add custom items to the list.
-Click Clear to delete the entire list (wishlist item: remove individual items, and/or strikethrough the font).
+GUI checklist that opens when you press J (keybind is configurable).
+Add custom items to the list. Click an "X" button to remove an item from the list.
+Click Clear List to delete the entire list.
 Click Close to hide the list (or press Insert again).
 
 
 ## Changelog
 
-No changes yet.
+0.7.0 - Keybind is configurable (and now J by default), can delete individual items, GUI improvements, more error checking.
+
+0.6.1 - Initial release.
 
 
 ## Known issues and source code
