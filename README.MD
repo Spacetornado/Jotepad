@@ -1,6 +1,6 @@
 # Jötepad
 
-A Valheim mod that adds a To-Do task/checklist. Add and remove whatever you want to the list (up to 10 total). Press J to display it.
+A Valheim mod that adds a To-Do task/checklist. Manage up to 10 custom items in the list. Press J to display Jotepad.
 
 ![Screenshot](http://tonays.com/i/jotepadscreen1.png "Jotepad Screenshot")
 
