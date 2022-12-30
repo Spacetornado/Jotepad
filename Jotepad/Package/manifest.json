@@ -1,8 +1,8 @@
 ﻿{
   "name": "Jotepad",
   "author": "Tonedef-AKA-Spacetornado",
-  "description": "Adds a To-Do task/checklist. Add and remove whatever you want to the list (up to 10 total). Press J to display it.",
-  "version_number": "0.7.3",
+  "description": "Adds a To-Do task/checklist. Manage up to 10 custom items in the list. Press J to display Jotepad.",
+  "version_number": "0.7.4",
   "website_url": "https://github.com/Spacetornado/Jotepad",
   "dependencies": [
     "ValheimModding-Jotunn-2.7.9"

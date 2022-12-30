@@ -21,7 +21,7 @@ namespace Jotepad
     {
         public const string PluginGUID = "com.jotunn.Jotepad";
         public const string PluginName = "Jotepad";
-        public const string PluginVersion = "0.7.3";
+        public const string PluginVersion = "0.7.4";
         private GameObject JotepadPanel;
         private ButtonConfig ShowGUIButton;
         private ConfigEntry<string> JotepadStringConfig;
