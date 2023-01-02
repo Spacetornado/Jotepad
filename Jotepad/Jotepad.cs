@@ -21,7 +21,7 @@ namespace Jotepad
     {
         public const string PluginGUID = "com.jotunn.Jotepad";
         public const string PluginName = "Jotepad";
-        public const string PluginVersion = "0.7.4";
+        public const string PluginVersion = "0.7.6";
         private GameObject JotepadPanel;
         private ButtonConfig ShowGUIButton;
         private ConfigEntry<string> JotepadStringConfig;
@@ -183,146 +183,7 @@ namespace Jotepad
             // Create the panel if it does not exist
             if (!JotepadPanel)
             {
-                if (GUIManager.Instance == null)
-                {
-                    return;
-                }
-                if (!GUIManager.CustomGUIFront)
-                {
-                    return;
-                }
-                // Wooden Jotepad panel
-                JotepadPanel = GUIManager.Instance.CreateWoodpanel(
-                    parent: GUIManager.CustomGUIFront.transform,
-                    anchorMin: new Vector2(0.5f, 0.5f),
-                    anchorMax: new Vector2(0.5f, 0.5f),
-                    position: new Vector2(0, 0),
-                    width: 850,
-                    height: 700,
-                    draggable: false);
-                JotepadPanel.SetActive(false);
-                JotepadPanel.AddComponent<DragWindowCntrl>();
-
-                // Jotepad label
-                GameObject itemText = GUIManager.Instance.CreateText(
-                    text: "Jotepad",
-                    parent: JotepadPanel.transform,
-                    anchorMin: new Vector2(0.5f, 0.5f),
-                    anchorMax: new Vector2(0.5f, 0.5f),
-                    position: new Vector2(5f, 265f),
-                    font: GUIManager.Instance.AveriaSerifBold,
-                    fontSize: 48,
-                    color: GUIManager.Instance.ValheimOrange,
-                    outline: true,
-                    outlineColor: Color.black,
-                    width: 200f,
-                    height: 80f,
-                    addContentSizeFitter: false);
-
-                // To do list text items
-                float yPos = START_TEXT_Y_POS;
-                GameObject[] JotepadTextItems = new GameObject[MAX_ITEMS];
-                for (int i = 0; i < MAX_ITEMS; i++) {
-                    if (i < JotepadArray.Length)
-                    {
-                        string val = "";
-                        if (!JotepadArray[i].IsNullOrWhiteSpace()) { val = JotepadArray[i]; }
-                        JotepadTextItems[i] = NewItemText(yPos, i, val);
-                    }
-                    else
-                    {
-                        JotepadTextItems[i] = NewItemText(yPos, i, "");
-                    }
-                    yPos -= MOVE_TEXT_Y;
-                }
-
-                // To do list delete buttons.
-                yPos = START_TEXT_Y_POS;
-                GameObject[] DeleteButtons = new GameObject[MAX_ITEMS];
-                for (int i = 0; i < MAX_ITEMS; i++) {
-                    DeleteButtons[i] = NewDeleteButton(yPos);
-                    yPos -= MOVE_TEXT_Y;
-                }
-                // There is definitely a more elegant way to do this, but I was very lazy... and it's only 10 buttons! :)
-                UnityEngine.UI.Button delButton1 = DeleteButtons[0].GetComponent<UnityEngine.UI.Button>();
-                delButton1.onClick.AddListener(Del1);
-                UnityEngine.UI.Button delButton2 = DeleteButtons[1].GetComponent<UnityEngine.UI.Button>();
-                delButton2.onClick.AddListener(Del2);
-                UnityEngine.UI.Button delButton3 = DeleteButtons[2].GetComponent<UnityEngine.UI.Button>();
-                delButton3.onClick.AddListener(Del3);
-                UnityEngine.UI.Button delButton4 = DeleteButtons[3].GetComponent<UnityEngine.UI.Button>();
-                delButton4.onClick.AddListener(Del4);
-                UnityEngine.UI.Button delButton5 = DeleteButtons[4].GetComponent<UnityEngine.UI.Button>();
-                delButton5.onClick.AddListener(Del5);
-                UnityEngine.UI.Button delButton6 = DeleteButtons[5].GetComponent<UnityEngine.UI.Button>();
-                delButton6.onClick.AddListener(Del6);
-                UnityEngine.UI.Button delButton7 = DeleteButtons[6].GetComponent<UnityEngine.UI.Button>();
-                delButton7.onClick.AddListener(Del7);
-                UnityEngine.UI.Button delButton8 = DeleteButtons[7].GetComponent<UnityEngine.UI.Button>();
-                delButton8.onClick.AddListener(Del8);
-                UnityEngine.UI.Button delButton9 = DeleteButtons[8].GetComponent<UnityEngine.UI.Button>();
-                delButton9.onClick.AddListener(Del9);
-                UnityEngine.UI.Button delButton10 = DeleteButtons[9].GetComponent<UnityEngine.UI.Button>();
-                delButton10.onClick.AddListener(Del10);
-
-                // Close button
-                GameObject closeButtonObject = GUIManager.Instance.CreateButton(
-                    text: "Close",
-                    parent: JotepadPanel.transform,
-                    anchorMin: new Vector2(0.5f, 0.5f),
-                    anchorMax: new Vector2(0.5f, 0.5f),
-                    position: new Vector2(300, -275f),
-                    width: 100f,
-                    height: 60f);
-                closeButtonObject.SetActive(true);
-
-                // Add a listener to the button to close the panel again
-                UnityEngine.UI.Button closeButton = closeButtonObject.GetComponent<UnityEngine.UI.Button>();
-                closeButton.onClick.AddListener(ToggleJotepad);
-
-                // Clear button
-                GameObject clearButtonObject = GUIManager.Instance.CreateButton(
-                    text: "Clear List",
-                    parent: JotepadPanel.transform,
-                    anchorMin: new Vector2(0.5f, 0.5f),
-                    anchorMax: new Vector2(0.5f, 0.5f),
-                    position: new Vector2(125, -275f),
-                    width: 100f,
-                    height: 60f);
-                clearButtonObject.SetActive(true);
-
-                // Add a listener to the button to close the panel again
-                UnityEngine.UI.Button clearButton = clearButtonObject.GetComponent<UnityEngine.UI.Button>();
-                clearButton.onClick.AddListener(ClearJotepad);
-
-                // Add custom item input field
-                GameObject inputField = GUIManager.Instance.CreateInputField(
-                    parent: JotepadPanel.transform,
-                    anchorMin: new Vector2(0.5f, 0.5f),
-                    anchorMax: new Vector2(0.5f, 0.5f),
-                    position: new Vector2(-265f, -275f),
-                    contentType: InputField.ContentType.Standard,
-                    placeholderText: "dream big...",
-                    fontSize: 16,
-                    width: 200f,
-                    height: 40f);
-                inputField.name = "InputField";
-
-                // Add custom button
-                GameObject addButtonObject = GUIManager.Instance.CreateButton(
-                    text: "Add",
-                    parent: JotepadPanel.transform,
-                    anchorMin: new Vector2(0.5f, 0.5f),
-                    anchorMax: new Vector2(0.5f, 0.5f),
-                    position: new Vector2(-100f, -275f),
-                    width: 80f,
-                    height: 60f);
-                addButtonObject.SetActive(true);
-
-                // Add a listener to the button to close the panel again
-                UnityEngine.UI.Button addButton = addButtonObject.GetComponent<UnityEngine.UI.Button>();
-                addButton.onClick.AddListener(AddTextItem);
-                GUI.FocusControl("InputField");
+                CreateJotepadPanel();
             }
 
             // Switch the current state
@@ -333,6 +194,156 @@ namespace Jotepad
 
             // Toggle input for the player and camera while displaying the GUI
             GUIManager.BlockInput(state);
+        }
+
+        private void CreateJotepadPanel()
+        {
+            #region Panel and Title
+            if (GUIManager.Instance == null)
+            {
+                return;
+            }
+            if (!GUIManager.CustomGUIFront)
+            {
+                return;
+            }
+            // Wooden Jotepad panel
+            JotepadPanel = GUIManager.Instance.CreateWoodpanel(
+                parent: GUIManager.CustomGUIFront.transform,
+                anchorMin: new Vector2(0.5f, 0.5f),
+                anchorMax: new Vector2(0.5f, 0.5f),
+                position: new Vector2(0, 0),
+                width: 850,
+                height: 700,
+                draggable: false);
+            JotepadPanel.SetActive(false);
+            JotepadPanel.AddComponent<DragWindowCntrl>();
+
+            // Jotepad label
+            GameObject itemText = GUIManager.Instance.CreateText(
+                text: "Jotepad",
+                parent: JotepadPanel.transform,
+                anchorMin: new Vector2(0.5f, 0.5f),
+                anchorMax: new Vector2(0.5f, 0.5f),
+                position: new Vector2(5f, 265f),
+                font: GUIManager.Instance.AveriaSerifBold,
+                fontSize: 48,
+                color: GUIManager.Instance.ValheimOrange,
+                outline: true,
+                outlineColor: Color.black,
+                width: 200f,
+                height: 80f,
+                addContentSizeFitter: false);
+            #endregion
+
+            #region To Do list items and buttons
+            // To do list text items
+            float yPos = START_TEXT_Y_POS;
+            GameObject[] JotepadTextItems = new GameObject[MAX_ITEMS];
+            for (int i = 0; i < MAX_ITEMS; i++)
+            {
+                if (i < JotepadArray.Length)
+                {
+                    string val = "";
+                    if (!JotepadArray[i].IsNullOrWhiteSpace()) { val = JotepadArray[i]; }
+                    JotepadTextItems[i] = NewItemText(yPos, i, val);
+                }
+                else
+                {
+                    JotepadTextItems[i] = NewItemText(yPos, i, "");
+                }
+                yPos -= MOVE_TEXT_Y;
+            }
+
+            // To do list delete buttons.
+            yPos = START_TEXT_Y_POS;
+            GameObject[] DeleteButtons = new GameObject[MAX_ITEMS];
+            for (int i = 0; i < MAX_ITEMS; i++)
+            {
+                DeleteButtons[i] = NewDeleteButton(yPos);
+                yPos -= MOVE_TEXT_Y;
+            }
+            // There is definitely a more elegant way to do this, but I was very lazy... and it's only 10 buttons! :)
+            UnityEngine.UI.Button delButton1 = DeleteButtons[0].GetComponent<UnityEngine.UI.Button>();
+            delButton1.onClick.AddListener(Del1);
+            UnityEngine.UI.Button delButton2 = DeleteButtons[1].GetComponent<UnityEngine.UI.Button>();
+            delButton2.onClick.AddListener(Del2);
+            UnityEngine.UI.Button delButton3 = DeleteButtons[2].GetComponent<UnityEngine.UI.Button>();
+            delButton3.onClick.AddListener(Del3);
+            UnityEngine.UI.Button delButton4 = DeleteButtons[3].GetComponent<UnityEngine.UI.Button>();
+            delButton4.onClick.AddListener(Del4);
+            UnityEngine.UI.Button delButton5 = DeleteButtons[4].GetComponent<UnityEngine.UI.Button>();
+            delButton5.onClick.AddListener(Del5);
+            UnityEngine.UI.Button delButton6 = DeleteButtons[5].GetComponent<UnityEngine.UI.Button>();
+            delButton6.onClick.AddListener(Del6);
+            UnityEngine.UI.Button delButton7 = DeleteButtons[6].GetComponent<UnityEngine.UI.Button>();
+            delButton7.onClick.AddListener(Del7);
+            UnityEngine.UI.Button delButton8 = DeleteButtons[7].GetComponent<UnityEngine.UI.Button>();
+            delButton8.onClick.AddListener(Del8);
+            UnityEngine.UI.Button delButton9 = DeleteButtons[8].GetComponent<UnityEngine.UI.Button>();
+            delButton9.onClick.AddListener(Del9);
+            UnityEngine.UI.Button delButton10 = DeleteButtons[9].GetComponent<UnityEngine.UI.Button>();
+            delButton10.onClick.AddListener(Del10);
+            #endregion
+
+            #region Bottom buttons and input field
+            // Close button
+            GameObject closeButtonObject = GUIManager.Instance.CreateButton(
+                text: "Close",
+                parent: JotepadPanel.transform,
+                anchorMin: new Vector2(0.5f, 0.5f),
+                anchorMax: new Vector2(0.5f, 0.5f),
+                position: new Vector2(300, -275f),
+                width: 100f,
+                height: 60f);
+            closeButtonObject.SetActive(true);
+
+            // Add a listener to the button to close the panel again
+            UnityEngine.UI.Button closeButton = closeButtonObject.GetComponent<UnityEngine.UI.Button>();
+            closeButton.onClick.AddListener(ToggleJotepad);
+
+            // Clear button
+            GameObject clearButtonObject = GUIManager.Instance.CreateButton(
+                text: "Clear List",
+                parent: JotepadPanel.transform,
+                anchorMin: new Vector2(0.5f, 0.5f),
+                anchorMax: new Vector2(0.5f, 0.5f),
+                position: new Vector2(125, -275f),
+                width: 100f,
+                height: 60f);
+            clearButtonObject.SetActive(true);
+
+            // Add a listener to the button to close the panel again
+            UnityEngine.UI.Button clearButton = clearButtonObject.GetComponent<UnityEngine.UI.Button>();
+            clearButton.onClick.AddListener(ClearJotepad);
+
+            // Add custom item input field
+            GameObject inputField = GUIManager.Instance.CreateInputField(
+                parent: JotepadPanel.transform,
+                anchorMin: new Vector2(0.5f, 0.5f),
+                anchorMax: new Vector2(0.5f, 0.5f),
+                position: new Vector2(-265f, -275f),
+                contentType: InputField.ContentType.Standard,
+                placeholderText: "dream big...",
+                fontSize: 16,
+                width: 200f,
+                height: 40f);
+            inputField.name = "InputField";
+
+            // Add custom button
+            GameObject addButtonObject = GUIManager.Instance.CreateButton(
+                text: "Add",
+                parent: JotepadPanel.transform,
+                anchorMin: new Vector2(0.5f, 0.5f),
+                anchorMax: new Vector2(0.5f, 0.5f),
+                position: new Vector2(-100f, -275f),
+                width: 80f,
+                height: 60f);
+            addButtonObject.SetActive(true);
+            UnityEngine.UI.Button addButton = addButtonObject.GetComponent<UnityEngine.UI.Button>();
+            addButton.onClick.AddListener(AddTextItem);
+            GUI.FocusControl("InputField"); // Doesn't seem to work :~(
+            #endregion
         }
         private void RemoveArrayItem(int index)
         {
@@ -390,7 +401,7 @@ namespace Jotepad
         {
             Config.SaveOnConfigSet = true;
             JotepadStringConfig = Config.Bind("Client config", "JotepadString", "", "Jotepad list");
-            ToggleJotepadConfig = Config.Bind("Client config", "Toggle Jotepad", KeyCode.J, new ConfigDescription("Show/hide the Jotepad panel."));
+            ToggleJotepadConfig = Config.Bind("Client config", "Toggle Jotepad", KeyCode.F4, new ConfigDescription("Show/hide the Jotepad panel."));
         }
 
     }
